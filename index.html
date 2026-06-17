@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reviva Pilates — Dashboard 2026</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+  :root {
+    --verde: #1a6b4a; --verde-mid: #2d9e72; --verde-light: #d1fae5;
+    --areia: #fdf8f3; --areia-dark: #f0e9de; --cinza: #64748b;
+    --cinza-light: #f1f5f9; --alerta: #dc6b1a; --alerta-light: #fff3e6;
+    --perigo: #be2626; --perigo-light: #fff0f0; --azul: #1d4ed8;
+    --azul-light: #eff6ff; --texto: #1e293b; --borda: #e2e8f0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--areia); color: var(--texto); min-height: 100vh; }
+  header { background: var(--verde); color: white; padding: 28px 32px 24px; display: flex; justify-content: space-between; align-items: flex-end; }
+  .logo { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.03em; }
+  .logo span { color: #86efac; }
+  .header-sub { font-size: 0.8rem; color: #a7f3d0; margin-top: 2px; }
+  .header-data { font-family: 'DM Mono', monospace; font-size: 0.78rem; color: #86efac; text-align: right; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 24px 20px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 20px; }
+  .card { background: white; border-radius: 14px; padding: 18px 20px; border: 1px solid var(--borda); box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+  .card-title { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--cinza); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .card-title::before { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 2px; background: var(--verde); }
+  .kpi-num { font-family: 'DM Mono', monospace; font-size: 1.7rem; font-weight: 500; line-height: 1; margin-bottom: 4px; }
+  .kpi-sub { font-size: 0.72rem; color: var(--cinza); }
+  .kpi-verde .kpi-num { color: var(--verde); }
+  .kpi-alerta .kpi-num { color: var(--alerta); }
+  .kpi-perigo .kpi-num { color: var(--perigo); }
+  .kpi-azul .kpi-num { color: var(--azul); }
+  .chart-wrap { position: relative; }
+  svg.chart { width: 100%; display: block; }
+  .prog-item { margin-bottom: 14px; }
+  .prog-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
+  .prog-label { font-size: 0.75rem; font-weight: 500; color: var(--texto); }
+  .prog-val { font-family: 'DM Mono', monospace; font-size: 0.72rem; color: var(--cinza); }
+  .prog-bg { background: var(--cinza-light); border-radius: 99px; height: 10px; overflow: hidden; }
+  .prog-fill { height: 100%; border-radius: 99px; transition: width 1s cubic-bezier(.4,0,.2,1); }
+  .tabela { width: 100%; border-collapse: collapse; font-size: 0.73rem; }
+  .tabela th { text-align: left; padding: 7px 10px; background: var(--verde-light); color: var(--verde); font-weight: 600; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  .tabela td { padding: 7px 10px; border-bottom: 1px solid var(--areia-dark); }
+  .tabela tr:hover td { background: var(--areia); }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 0.65rem; font-weight: 600; }
+  .b-pago { background: var(--verde-light); color: var(--verde); }
+  .b-pendente { background: var(--alerta-light); color: var(--alerta); }
+  .semaforo-card { border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; }
+  .semaforo-card .dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+  .sem-verde { background: var(--verde-light); } .sem-verde .dot { background: #16a34a; box-shadow: 0 0 0 3px #bbf7d0; }
+  .sem-amarelo { background: #fef9c3; } .sem-amarelo .dot { background: #ca8a04; box-shadow: 0 0 0 3px #fef08a; }
+  .sem-vermelho { background: var(--perigo-light); } .sem-vermelho .dot { background: var(--perigo); box-shadow: 0 0 0 3px #fecaca; }
+  .sem-text strong { display: block; font-size: 0.75rem; font-weight: 600; margin-bottom: 2px; }
+  .sem-text span { font-size: 0.7rem; color: var(--cinza); }
+  .tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+  .tab-btn { padding: 5px 14px; border-radius: 99px; border: 1.5px solid var(--borda); background: white; font-family: 'DM Sans', sans-serif; font-size: 0.72rem; font-weight: 600; color: var(--cinza); cursor: pointer; transition: all 0.15s; }
+  .tab-btn.ativo { background: var(--verde); color: white; border-color: var(--verde); }
+  .tab-conteudo { display: none; }
+  .tab-conteudo.ativo { display: block; }
+  .plano-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .plano-box { background: var(--cinza-light); border-radius: 10px; padding: 10px 12px; border-left: 3px solid var(--verde); }
+  .plano-nome { font-size: 0.68rem; color: var(--cinza); font-weight: 500; margin-bottom: 2px; }
+  .plano-num { font-family: 'DM Mono', monospace; font-size: 1.3rem; font-weight: 500; color: var(--verde); }
+  .contrato-visual { display: flex; border-radius: 10px; overflow: hidden; height: 36px; margin: 12px 0; }
+  .contrato-assinado { background: var(--verde-mid); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.72rem; font-weight: 600; }
+  .contrato-sem { background: var(--perigo-light); border: 1px solid #fecaca; display: flex; align-items: center; justify-content: center; color: var(--perigo); font-size: 0.72rem; font-weight: 600; }
+  .alerta-box { background: var(--alerta-light); border-left: 3px solid var(--alerta); border-radius: 0 8px 8px 0; padding: 10px 14px; font-size: 0.73rem; color: #92400e; margin-top: 10px; }
+  .meta-table { width: 100%; border-collapse: collapse; font-size: 0.72rem; }
+  .meta-table th { text-align: left; padding: 6px 10px; color: var(--cinza); font-weight: 600; font-size: 0.68rem; text-transform: uppercase; border-bottom: 2px solid var(--borda); }
+  .meta-table td { padding: 8px 10px; border-bottom: 1px solid var(--areia-dark); }
+  .meta-table .destaque { font-family: 'DM Mono', monospace; font-weight: 500; }
+  .linha-min { background: #fff5f5; } .linha-conf { background: #fffbeb; } .linha-cresc { background: #f0fdf4; }
+  .section-label { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--cinza); margin-bottom: 10px; margin-top: 4px; }
+  #loading { position: fixed; inset: 0; background: var(--verde); display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; z-index: 999; }
+  #loading .spin { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 16px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #loading p { font-size: 0.9rem; color: #a7f3d0; }
+  @media (max-width: 700px) {
+    .grid-4 { grid-template-columns: 1fr 1fr; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    header { flex-direction: column; gap: 8px; align-items: flex-start; }
+    .kpi-num { font-size: 1.4rem; }
+    .card { padding: 14px 16px; }
+    .contrato-visual { height: auto; flex-direction: column; }
+    .contrato-assinado, .contrato-sem { width: 100% !important; padding: 6px; }
+    .plano-grid { grid-template-columns: 1fr 1fr; }
+    .meta-table th, .meta-table td { font-size: 0.65rem; padding: 5px 6px; }
+  }
+  @media (max-width: 420px) {
+    .grid-4 { grid-template-columns: 1fr; }
+    .kpi-num { font-size: 1.6rem; }
+  }
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="spin"></div>
+  <p>Carregando dados das planilhas...</p>
+</div>
+
+<header>
+  <div>
+    <div class="logo">Reviva <span>Pilates</span></div>
+    <div class="header-sub">Dashboard de Desempenho · 2026</div>
+  </div>
+  <div class="header-data" id="header-data">Carregando...</div>
+</header>
+
+<div class="container">
+
+  <div class="grid-4">
+    <div class="card kpi kpi-azul">
+      <div class="card-title">Receita Acumulada</div>
+      <div class="kpi-num" id="kpi-receita">—</div>
+      <div class="kpi-sub" id="kpi-receita-sub">carregando...</div>
+    </div>
+    <div class="card kpi kpi-alerta">
+      <div class="card-title">Meta Mínima Mensal</div>
+      <div class="kpi-num">R$ 34,4k</div>
+      <div class="kpi-sub" id="kpi-meta-sub">carregando...</div>
+    </div>
+    <div class="card kpi kpi-verde">
+      <div class="card-title">Melhor Mês</div>
+      <div class="kpi-num" id="kpi-melhor">—</div>
+      <div class="kpi-sub" id="kpi-melhor-sub">—</div>
+    </div>
+    <div class="card kpi kpi-perigo">
+      <div class="card-title">Mês Atual — Gap da Meta</div>
+      <div class="kpi-num" id="kpi-gap">—</div>
+      <div class="kpi-sub" id="kpi-gap-sub">carregando...</div>
+    </div>
+  </div>
+
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-title">Desempenho Mensal vs Meta Mínima</div>
+      <div class="chart-wrap" style="margin-top:10px">
+        <svg class="chart" id="chart-svg" viewBox="0 0 580 200" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#2d9e72" stop-opacity="0.18"/>
+              <stop offset="100%" stop-color="#2d9e72" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <text x="36" y="24" font-size="9" fill="#94a3b8" text-anchor="end" font-family="DM Mono,monospace">45k</text>
+          <text x="36" y="60" font-size="9" fill="#94a3b8" text-anchor="end" font-family="DM Mono,monospace">35k</text>
+          <text x="36" y="96" font-size="9" fill="#94a3b8" text-anchor="end" font-family="DM Mono,monospace">25k</text>
+          <text x="36" y="132" font-size="9" fill="#94a3b8" text-anchor="end" font-family="DM Mono,monospace">15k</text>
+          <text x="36" y="168" font-size="9" fill="#94a3b8" text-anchor="end" font-family="DM Mono,monospace">5k</text>
+          <line x1="42" y1="20" x2="560" y2="20" stroke="#f1f5f9" stroke-width="1"/>
+          <line x1="42" y1="56" x2="560" y2="56" stroke="#f1f5f9" stroke-width="1"/>
+          <line x1="42" y1="92" x2="560" y2="92" stroke="#f1f5f9" stroke-width="1"/>
+          <line x1="42" y1="128" x2="560" y2="128" stroke="#f1f5f9" stroke-width="1"/>
+          <line x1="42" y1="164" x2="560" y2="164" stroke="#f1f5f9" stroke-width="1"/>
+          <line x1="42" y1="170" x2="560" y2="170" stroke="#e2e8f0" stroke-width="1.5"/>
+          <line x1="42" y1="10" x2="42" y2="170" stroke="#e2e8f0" stroke-width="1.5"/>
+          <line x1="42" y1="58" x2="560" y2="58" stroke="#be2626" stroke-width="1.5" stroke-dasharray="6,4" opacity="0.7"/>
+          <rect x="490" y="48" width="65" height="16" rx="4" fill="#be2626" opacity="0.9"/>
+          <text x="522" y="59" font-size="8.5" fill="white" text-anchor="middle" font-weight="600">META MÍN.</text>
+          <g id="chart-dynamic"></g>
+          <text x="60" y="197" font-size="8" fill="#64748b">━ Receita Total</text>
+          <line x1="160" y1="197" x2="180" y2="197" stroke="#be2626" stroke-width="1.5" stroke-dasharray="4,3"/>
+          <text x="184" y="200" font-size="8" fill="#64748b">Meta Mínima</text>
+        </svg>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Metas de Referência</div>
+      <table class="meta-table">
+        <thead><tr><th>Tipo</th><th>Mensal</th><th>Semanal</th></tr></thead>
+        <tbody>
+          <tr class="linha-min"><td>🔴 Mínima</td><td class="destaque">R$ 34.367</td><td class="destaque">R$ 8.592</td></tr>
+          <tr class="linha-conf"><td>🟡 Confortável</td><td class="destaque">R$ 42.573</td><td class="destaque">R$ 10.643</td></tr>
+          <tr class="linha-cresc"><td>🟢 Crescimento</td><td class="destaque">R$ 46.257</td><td class="destaque">R$ 11.564</td></tr>
+        </tbody>
+      </table>
+
+      <div style="margin-top:16px">
+        <div class="section-label">Progresso — Mês Atual</div>
+        <div class="prog-item">
+          <div class="prog-header"><span class="prog-label">Meta Mínima (R$ 34.367)</span><span class="prog-val" id="pct-min">—</span></div>
+          <div class="prog-bg"><div class="prog-fill" id="bar-min" style="width:0%;background:#be2626"></div></div>
+        </div>
+        <div class="prog-item">
+          <div class="prog-header"><span class="prog-label">Meta Confortável (R$ 42.573)</span><span class="prog-val" id="pct-conf">—</span></div>
+          <div class="prog-bg"><div class="prog-fill" id="bar-conf" style="width:0%;background:#d97706"></div></div>
+        </div>
+        <div id="semaforo-box" class="semaforo-card sem-vermelho" style="margin-top:12px">
+          <div class="dot"></div>
+          <div class="sem-text"><strong id="sem-titulo">Carregando...</strong><span id="sem-desc">—</span></div>
+        </div>
+      </div>
+
+      <div style="margin-top:14px">
+        <div class="section-label">Semáforo Semanal</div>
+        <div class="semaforo-card sem-verde"><div class="dot"></div><div class="sem-text"><strong>≥ 75% acumulado</strong><span>No caminho certo 👍</span></div></div>
+        <div class="semaforo-card sem-amarelo"><div class="dot"></div><div class="sem-text"><strong>50–74% acumulado</strong><span>Atenção — acelerar captação</span></div></div>
+        <div class="semaforo-card sem-vermelho"><div class="dot"></div><div class="sem-text"><strong>&lt; 50% acumulado</strong><span>Risco — agir imediatamente</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Clientes por Plano</div>
+      <div class="tabs">
+        <button class="tab-btn ativo" onclick="abrirTab(event,'varzea')">Várzea</button>
+        <button class="tab-btn" onclick="abrirTab(event,'cf')">Casa Forte</button>
+      </div>
+      <div id="tab-varzea" class="tab-conteudo ativo">
+        <div class="plano-grid" id="planos-varzea">
+          <div class="plano-box"><div class="plano-nome">Carregando...</div><div class="plano-num">—</div></div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap" id="badges-varzea"></div>
+        <div class="alerta-box" id="alerta-varzea" style="margin-top:10px">Carregando dados...</div>
+      </div>
+      <div id="tab-cf" class="tab-conteudo">
+        <div class="plano-grid" id="planos-cf">
+          <div class="plano-box"><div class="plano-nome">Carregando...</div><div class="plano-num">—</div></div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap" id="badges-cf"></div>
+        <div class="alerta-box" id="alerta-cf" style="margin-top:10px">Carregando dados...</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Contratos &amp; Adimplência — Mês Atual</div>
+      <div style="margin-top:8px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+          <div style="text-align:center"><div class="kpi-num" id="total-pagos" style="font-size:2rem;color:var(--verde)">—</div><div style="font-size:0.68rem;color:var(--cinza)">Pagos</div></div>
+          <div style="text-align:center"><div class="kpi-num" id="total-pendentes" style="font-size:2rem;color:var(--perigo)">—</div><div style="font-size:0.68rem;color:var(--cinza)">Pendentes</div></div>
+          <div style="text-align:center"><div class="kpi-num" id="total-clientes" style="font-size:2rem;color:var(--cinza)">—</div><div style="font-size:0.68rem;color:var(--cinza)">Total</div></div>
+        </div>
+        <div class="contrato-visual">
+          <div class="contrato-assinado" id="barra-pagos" style="width:50%">—% pagos</div>
+          <div class="contrato-sem" id="barra-pendentes" style="width:50%">—% pend.</div>
+        </div>
+        <div class="tabs" style="margin-bottom:8px">
+          <button class="tab-btn ativo" onclick="abrirTab(event,'adim-varzea')">Várzea</button>
+          <button class="tab-btn" onclick="abrirTab(event,'adim-cf')">Casa Forte</button>
+        </div>
+        <div id="tab-adim-varzea" class="tab-conteudo ativo" style="overflow-y:auto;max-height:220px">
+          <table class="tabela"><thead><tr><th>Cliente</th><th>Valor</th><th>Status</th></tr></thead>
+          <tbody id="tbody-varzea"></tbody></table>
+        </div>
+        <div id="tab-adim-cf" class="tab-conteudo" style="overflow-y:auto;max-height:220px">
+          <table class="tabela"><thead><tr><th>Cliente</th><th>Valor</th><th>Status</th></tr></thead>
+          <tbody id="tbody-cf"></tbody></table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p style="text-align:center;font-size:0.68rem;color:#94a3b8;margin-top:8px">
+    Reviva Pilates · Dashboard 2026 · Dados atualizados direto do Google Sheets
+  </p>
+</div>
+
+<script>
+const API_KEY = 'AIzaSyD2T3kRu65vDyKNPa1C3vsZUutKLo7w6cM';
+const ID_CONSOLIDADO = '1Ni5bmgzRcuU51eCHvcDQyLpSn1VT7GRaIstQt4Hpga8';
+const ID_VARZEA     = '1DdRP3rQkVlQhPsPc2uBFfXHgUetWNM7u1bYBC_Ej-UY';
+const META_MIN = 34367;
+const META_CONF = 42573;
+
+const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+function fmt(v) {
+  if (isNaN(v) || v === null) return '—';
+  return 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function parseVal(s) {
+  if (!s) return 0;
+  return parseFloat(String(s).replace(/[R$\s.]/g,'').replace(',','.')) || 0;
+}
+
+async function fetchSheet(id, range) {
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${id}/values/${encodeURIComponent(range)}?key=${API_KEY}`;
+  const r = await fetch(url);
+  const d = await r.json();
+  return d.values || [];
+}
+
+function abrirTab(e, id) {
+  document.querySelectorAll('.tab-conteudo').forEach(el => el.classList.remove('ativo'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('ativo'));
+  document.getElementById('tab-' + id).classList.add('ativo');
+  e.target.classList.add('ativo');
+}
+
+function drawChart(receitas) {
+  const g = document.getElementById('chart-dynamic');
+  g.innerHTML = '';
+  const xs = [80,168,256,344,432,520,608]; // até 7 meses
+  const dados = receitas.slice(0,7);
+  if (dados.length === 0) return;
+
+  // escala: 5k=164, 45k=20 => y = 164 - ((v-5000)/40000)*144
+  function yPos(v) { return Math.max(10, Math.min(164, 164 - ((v-5000)/40000)*144)); }
+
+  // área
+  let polyPts = dados.map((v,i) => `${xs[i]},${yPos(v)}`).join(' ');
+  polyPts += ` ${xs[dados.length-1]},164 ${xs[0]},164`;
+  const poly = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+  poly.setAttribute('points', polyPts);
+  poly.setAttribute('fill','url(#areaGrad)');
+  g.appendChild(poly);
+
+  // linha
+  const line = document.createElementNS('http://www.w3.org/2000/svg','polyline');
+  line.setAttribute('points', dados.map((v,i) => `${xs[i]},${yPos(v)}`).join(' '));
+  line.setAttribute('fill','none');
+  line.setAttribute('stroke','#2d9e72');
+  line.setAttribute('stroke-width','2.5');
+  line.setAttribute('stroke-linejoin','round');
+  line.setAttribute('stroke-linecap','round');
+  g.appendChild(line);
+
+  dados.forEach((v,i) => {
+    const isUltimo = i === dados.length - 1;
+    // ponto
+    const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx', xs[i]); c.setAttribute('cy', yPos(v)); c.setAttribute('r','5');
+    c.setAttribute('fill','white'); c.setAttribute('stroke', isUltimo ? '#94a3b8' : '#2d9e72'); c.setAttribute('stroke-width','2.5');
+    g.appendChild(c);
+    // valor
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x', xs[i]); t.setAttribute('y', yPos(v)-8);
+    t.setAttribute('font-size','8.5'); t.setAttribute('fill', isUltimo ? '#94a3b8' : '#1a6b4a');
+    t.setAttribute('text-anchor','middle'); t.setAttribute('font-family','DM Mono,monospace');
+    t.textContent = (v/1000).toFixed(1)+'k' + (isUltimo ? '*' : '');
+    g.appendChild(t);
+    // label X
+    const lx = document.createElementNS('http://www.w3.org/2000/svg','text');
+    lx.setAttribute('x', xs[i]); lx.setAttribute('y','184');
+    lx.setAttribute('font-size','9.5'); lx.setAttribute('fill', isUltimo ? '#94a3b8' : '#64748b');
+    lx.setAttribute('text-anchor','middle');
+    lx.textContent = MESES[i].substring(0,3);
+    g.appendChild(lx);
+  });
+}
+
+function contarPlanos(rows) {
+  const planos = {'Anual 2x':0,'Anual 3x':0,'Semestral':0,'Mensal':0,'Trimestral':0,'Outros':0};
+  rows.forEach(r => {
+    // Tenta todas as colunas possíveis onde o plano pode estar (col 4, 5 ou 6)
+    const texto = [r[4]||'', r[5]||'', r[6]||''].join(' ').toUpperCase();
+    if (texto.includes('ANUAL 3')) planos['Anual 3x']++;
+    else if (texto.includes('ANUAL 2')) planos['Anual 2x']++;
+    else if (texto.includes('SEMESTRAL')) planos['Semestral']++;
+    else if (texto.includes('TRIMESTRAL')) planos['Trimestral']++;
+    else if (texto.includes('MENSAL')) planos['Mensal']++;
+    else if (texto.trim()) planos['Outros']++;
+  });
+  return planos;
+}
+
+function renderPlanos(planos, elId) {
+  const el = document.getElementById(elId);
+  el.innerHTML = Object.entries(planos).filter(([,v])=>v>0).map(([k,v]) =>
+    `<div class="plano-box"><div class="plano-nome">${k}</div><div class="plano-num">${v}</div></div>`
+  ).join('');
+}
+
+function renderTabela(rows, tbodyId) {
+  const tbody = document.getElementById(tbodyId);
+  tbody.innerHTML = rows.map(r => {
+    const nome = r[3]||'';
+    const valor = r[4]||'—';
+    const pago = String(r[8]||'').toUpperCase() === 'TRUE';
+    return `<tr><td>${nome}</td><td>${valor}</td><td><span class="badge ${pago?'b-pago':'b-pendente'}">${pago?'✓ Pago':'⚠ Pendente'}</span></td></tr>`;
+  }).join('');
+}
+
+async function init() {
+  try {
+    // 1. Dados consolidados CF
+    const consol = await fetchSheet(ID_CONSOLIDADO, 'CONSOLIDADO!A1:N15');
+    const receitas = [];
+    let receitaRow = null;
+    consol.forEach(row => {
+      if (row[0] === 'RECEITA') receitaRow = row;
+    });
+    if (receitaRow) {
+      for (let i = 1; i <= 12; i++) {
+        const v = parseVal(receitaRow[i]);
+        if (v > 0) receitas.push(v);
+      }
+    }
+
+    // 2. CF Jun/26 - clientes
+    const cfRows = await fetchSheet(ID_CONSOLIDADO, 'CF JUN/26!A3:K100');
+    const cfClientes = cfRows.filter(r => r[3] && r[3].trim() && !r[3].startsWith('TOTAL') && !r[3].startsWith('LISTA'));
+
+    // 3. Várzea - clientes (aba principal)
+    let varzRows = [];
+    try {
+      varzRows = await fetchSheet(ID_VARZEA, 'CX JUN/26!A3:K100');
+    } catch(e) {
+      // tenta aba diferente
+      
+    }
+    const varzClientes = varzRows.filter(r => { const nome = (r[3]||'').trim(); if (!nome) return false; const excluir = ['TOTAL','LISTA','NOME','LISTA DE ALUNOS','REVIVA']; return !excluir.some(e => nome.toUpperCase().startsWith(e)); });
+
+    // --- KPIs ---
+    const totalAcum = receitas.reduce((a,b)=>a+b,0);
+    const mediaM = receitas.length ? totalAcum/receitas.length : 0;
+    document.getElementById('kpi-receita').textContent = 'R$ ' + (totalAcum/1000).toFixed(0) + 'k';
+    document.getElementById('kpi-receita-sub').textContent = `Média R$ ${(mediaM/1000).toFixed(1)}k / mês (${receitas.length} meses)`;
+
+    const mesesComDados = receitas.length;
+    document.getElementById('kpi-meta-sub').textContent = mesesComDados + ' mês(es) com dados — nenhum atingiu ainda';
+
+    let melhorIdx = receitas.indexOf(Math.max(...receitas));
+    document.getElementById('kpi-melhor').textContent = MESES[melhorIdx]||'—';
+    document.getElementById('kpi-melhor-sub').textContent = fmt(receitas[melhorIdx]||0) + ' faturados';
+
+    const ultimaReceita = receitas[receitas.length-1]||0;
+    const gap = ultimaReceita - META_MIN;
+    document.getElementById('kpi-gap').textContent = gap >= 0 ? '+'+fmt(gap) : fmt(gap);
+    document.getElementById('kpi-gap-sub').textContent = MESES[receitas.length-1] + (gap<0?' — abaixo da meta':' — meta atingida! 🎉');
+
+    // --- Gráfico ---
+    drawChart(receitas);
+
+    // --- Progresso mês atual ---
+    const pctMin = Math.min(100, Math.round((ultimaReceita/META_MIN)*100));
+    const pctConf = Math.min(100, Math.round((ultimaReceita/META_CONF)*100));
+    document.getElementById('pct-min').textContent = pctMin+'%';
+    document.getElementById('pct-conf').textContent = pctConf+'%';
+    document.getElementById('bar-min').style.width = pctMin+'%';
+    document.getElementById('bar-conf').style.width = pctConf+'%';
+
+    const semBox = document.getElementById('semaforo-box');
+    const semTit = document.getElementById('sem-titulo');
+    const semDesc = document.getElementById('sem-desc');
+    if (gap >= 0) {
+      semBox.className = 'semaforo-card sem-verde';
+      semTit.textContent = 'Meta atingida! 🎉';
+      semDesc.textContent = fmt(gap) + ' acima da meta mínima';
+    } else if (pctMin >= 75) {
+      semBox.className = 'semaforo-card sem-amarelo';
+      semTit.textContent = 'Atenção — reta final';
+      semDesc.textContent = 'Faltam ' + fmt(Math.abs(gap)) + ' para a meta';
+    } else {
+      semBox.className = 'semaforo-card sem-vermelho';
+      semTit.textContent = MESES[receitas.length-1] + ' em risco';
+      semDesc.textContent = 'Faltam ' + fmt(Math.abs(gap)) + ' para a meta mínima';
+    }
+
+    // --- Clientes CF ---
+    const cfPagos = cfClientes.filter(r => String(r[8]||'').toUpperCase()==='TRUE').length;
+    const cfPend = cfClientes.length - cfPagos;
+    renderPlanos(contarPlanos(cfClientes), 'planos-cf');
+    document.getElementById('badges-cf').innerHTML =
+      `<span class="badge b-pago">✓ ${cfPagos} adimplentes</span><span class="badge b-pendente">⚠ ${cfPend} pendentes</span>`;
+    const cfReceita = cfClientes.reduce((a,r)=>a+parseVal(r[4]),0);
+    document.getElementById('alerta-cf').innerHTML = `💡 Receita CF (mês atual): <strong>${fmt(cfReceita)}</strong> · Reviva: <strong>${fmt(cfReceita*0.5)}</strong> (50%)`;
+    renderTabela(cfClientes, 'tbody-cf');
+
+    // --- Clientes Várzea ---
+    const vPagos = varzClientes.filter(r => String(r[8]||'').toUpperCase()==='TRUE').length;
+    const vPend = varzClientes.length - vPagos;
+    if (varzClientes.length > 0) {
+      renderPlanos(contarPlanos(varzClientes), 'planos-varzea');
+      document.getElementById('badges-varzea').innerHTML =
+        `<span class="badge b-pago">✓ ${vPagos} adimplentes</span><span class="badge b-pendente">⚠ ${vPend} pendentes</span>`;
+      const vReceita = varzClientes.reduce((a,r)=>a+parseVal(r[4]),0);
+      document.getElementById('alerta-varzea').innerHTML = `💡 Regularizar os ${vPend} pendentes pode representar <strong>${fmt(vPend*200)}/mês</strong> garantidos`;
+      renderTabela(varzClientes, 'tbody-varzea');
+    } else {
+      document.getElementById('planos-varzea').innerHTML = '<div class="plano-box" style="grid-column:1/-1"><div class="plano-nome">Dados da Várzea não encontrados</div><div class="plano-num" style="font-size:0.8rem">Verifique o nome da aba na planilha</div></div>';
+    }
+
+    // --- Totais contratos ---
+    const totPagos = cfPagos + vPagos;
+    const totPend = cfPend + vPend;
+    const totTotal = cfClientes.length + varzClientes.length;
+    const pctPago = totTotal ? Math.round((totPagos/totTotal)*100) : 0;
+    document.getElementById('total-pagos').textContent = totPagos;
+    document.getElementById('total-pendentes').textContent = totPend;
+    document.getElementById('total-clientes').textContent = totTotal;
+    document.getElementById('barra-pagos').style.width = pctPago+'%';
+    document.getElementById('barra-pagos').textContent = pctPago+'% pagos';
+    document.getElementById('barra-pendentes').style.width = (100-pctPago)+'%';
+    document.getElementById('barra-pendentes').textContent = (100-pctPago)+'% pend.';
+
+    // --- Header ---
+    const now = new Date();
+    document.getElementById('header-data').innerHTML =
+      `Atualizado: ${now.toLocaleDateString('pt-BR')} ${now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}<br>Unidades: Casa Forte · Várzea`;
+
+    document.getElementById('loading').style.display = 'none';
+
+  } catch(err) {
+    document.getElementById('loading').innerHTML =
+      `<div style="text-align:center;padding:20px"><p style="color:#fca5a5;font-size:1rem">Erro ao carregar dados</p><p style="color:#86efac;font-size:0.8rem;margin-top:8px">${err.message}</p><p style="color:#a7f3d0;font-size:0.75rem;margin-top:12px">Verifique se as planilhas estão com acesso público</p></div>`;
+  }
+}
+
+init();
+</script>
+</body>
+</html>
