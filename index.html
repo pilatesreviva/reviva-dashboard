@@ -273,8 +273,9 @@ async function fetchSheet(id, range) {
 }
 
 function abrirTab(e, id) {
-  document.querySelectorAll('.tab-conteudo').forEach(el => el.classList.remove('ativo'));
-  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('ativo'));
+  const card = e.target.closest('.card');
+  card.querySelectorAll('.tab-conteudo').forEach(el => el.classList.remove('ativo'));
+  card.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('ativo'));
   document.getElementById('tab-' + id).classList.add('ativo');
   e.target.classList.add('ativo');
 }
