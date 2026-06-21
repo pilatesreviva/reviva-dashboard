@@ -266,12 +266,13 @@ function parseVal(s) {
 }
 
 async function fetchSheet(id, range) {
-  // Encode only the sheet name part (before !) to preserve the ! and : separators
+  // Wrap sheet name in single quotes to handle special chars (spaces, /)
   const parts = range.split('!');
-  const encodedRange = parts.length === 2
-    ? encodeURIComponent(parts[0]) + '!' + parts[1]
-    : encodeURIComponent(range);
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${id}/values/${encodedRange}?key=${API_KEY}`;
+  const sheetName = parts[0].replace(/^'|'$/g, ''); // remove existing quotes if any
+  const quotedRange = parts.length === 2
+    ? "'" + sheetName + "'!" + parts[1]
+    : range;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${id}/values/${encodeURIComponent(quotedRange)}?key=${API_KEY}`;
   const r = await fetch(url);
   const d = await r.json();
   if (d.error) console.warn('Sheets API error:', d.error.message, 'range:', range);
