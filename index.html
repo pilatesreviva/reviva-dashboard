@@ -373,8 +373,8 @@ async function init() {
     const mesAtual = agora.getMonth();
     const anoAtual = String(agora.getFullYear()).slice(2);
     const MESES_ABREV = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
-    const abaAtualCF = 'CF ' + MESES_ABREV[mesAtual] + '-' + anoAtual;
-    const abaAtualCX = 'CX ' + MESES_ABREV[mesAtual] + '-' + anoAtual;
+    const abaAtualCF = 'CF ' + MESES_ABREV[mesAtual] + anoAtual;
+    const abaAtualCX = 'CX ' + MESES_ABREV[mesAtual] + anoAtual;
 
     // 1. Consolidado CF — receitas mensais (array fixo de 12 posições: índice 0=Jan...11=Dez)
     const consol = await fetchSheet(ID_CONSOLIDADO, 'CONSOLIDADO!A1:N15');
@@ -413,14 +413,14 @@ async function init() {
     // 4. Clientes CF — aba do mês atual detectada automaticamente
     let cfRows = [];
     try { cfRows = await fetchSheet(ID_CONSOLIDADO, abaAtualCF + '!A3:K100'); } catch(e) {
-      try { cfRows = await fetchSheet(ID_CONSOLIDADO, 'CF JUN-26!A3:K100'); } catch(e2) {}
+      try { cfRows = await fetchSheet(ID_CONSOLIDADO, 'CF JUN26!A3:K100'); } catch(e2) {}
     }
     const cfClientes = cfRows.filter(r => r[3] && r[3].trim() && !r[3].startsWith('TOTAL') && !r[3].startsWith('LISTA'));
 
     // 5. Clientes Várzea — aba do mês atual detectada automaticamente
     let varzRows = [];
     try { varzRows = await fetchSheet(ID_VARZEA, abaAtualCX + '!A3:K100'); } catch(e) {
-      try { varzRows = await fetchSheet(ID_VARZEA, 'CX JUN-26!A3:K100'); } catch(e2) {}
+      try { varzRows = await fetchSheet(ID_VARZEA, 'CX JUN26!A3:K100'); } catch(e2) {}
     }
     const varzClientes = varzRows.filter(r => { const nome = (r[3]||'').trim(); if (!nome) return false; const excluir = ['TOTAL','LISTA','NOME','LISTA DE ALUNOS','REVIVA']; return !excluir.some(e => nome.toUpperCase().startsWith(e)); });
 
