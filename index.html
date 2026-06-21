@@ -419,6 +419,11 @@ async function init() {
     try { cfRows = await fetchSheet(ID_CONSOLIDADO, abaAtualCF + '!A3:K100'); } catch(e) {
       try { cfRows = await fetchSheet(ID_CONSOLIDADO, 'CF JUN/26!A3:K100'); } catch(e2) {}
     }
+    // DEBUG — remover depois
+    const dbg = document.createElement('div');
+    dbg.style = 'background:#1e293b;color:#86efac;font-family:monospace;font-size:11px;padding:10px;margin:10px 0;border-radius:8px;white-space:pre-wrap;word-break:break-all';
+    dbg.textContent = 'CF rows recebidas: ' + cfRows.length + '\nAba buscada: ' + abaAtualCF + '\nPrimeira linha: ' + JSON.stringify(cfRows[0]);
+    document.querySelector('.container').prepend(dbg);
     const cfClientes = cfRows.filter(r => r[3] && r[3].trim() && !r[3].startsWith('TOTAL') && !r[3].startsWith('LISTA'));
 
     // 5. Clientes Várzea — aba do mês atual detectada automaticamente
