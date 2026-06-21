@@ -266,20 +266,12 @@ function parseVal(s) {
 }
 
 async function fetchSheet(id, range) {
-  const parts = range.split('!');
-  let urlRange;
-  if (parts.length === 2) {
-    // Encode only space and / inside sheet name; keep ' ! : literal for the API
-    const sheetEnc = parts[0].replace(/^'|'$/g, '').replace(/ /g, '%20').replace(/\//g, '%2F');
-    urlRange = "'" + sheetEnc + "'!" + parts[1];
-  } else {
-    urlRange = encodeURIComponent(range);
-  }
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${id}/values/${urlRange}?key=${API_KEY}`;
+  // Use batchGet so the range goes as a query param (avoids / being treated as path separator)
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${id}/values:batchGet?ranges=${encodeURIComponent(range)}&key=${API_KEY}`;
   const r = await fetch(url);
   const d = await r.json();
-  if (d.error) console.warn('Sheets API error:', d.error.message, 'url:', url);
-  return d.values || [];
+  if (d.error) console.warn('Sheets API error:', d.error.message, 'range:', range);
+  return (d.valueRanges && d.valueRanges[0] && d.valueRanges[0].values) || [];
 }
 
 function abrirTab(e, id) {
@@ -423,15 +415,6 @@ async function init() {
     try { cfRows = await fetchSheet(ID_CONSOLIDADO, abaAtualCF + '!A3:K100'); } catch(e) {
       try { cfRows = await fetchSheet(ID_CONSOLIDADO, 'CF JUN/26!A3:K100'); } catch(e2) {}
     }
-    // DEBUG — remover depois
-    const dbgUrl = `'CF%20JUN%2F26'!A3:K100`;
-    const dbgFull = `https://sheets.googleapis.com/v4/spreadsheets/${ID_CONSOLIDADO}/values/${dbgUrl}?key=${API_KEY}`;
-    const dbgResp = await fetch(dbgFull);
-    const dbgJson = await dbgResp.json();
-    const dbg = document.createElement('div');
-    dbg.style = 'background:#1e293b;color:#86efac;font-family:monospace;font-size:11px;padding:10px;margin:10px 0;border-radius:8px;white-space:pre-wrap;word-break:break-all';
-    dbg.textContent = 'CF rows: ' + cfRows.length + '\nAba: ' + abaAtualCF + '\nResposta API: ' + JSON.stringify(dbgJson).substring(0,300);
-    document.querySelector('.container').prepend(dbg);
     const cfClientes = cfRows.filter(r => r[3] && r[3].trim() && !r[3].startsWith('TOTAL') && !r[3].startsWith('LISTA'));
 
     // 5. Clientes Várzea — aba do mês atual detectada automaticamente
