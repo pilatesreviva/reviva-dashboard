@@ -266,16 +266,19 @@ function parseVal(s) {
 }
 
 async function fetchSheet(id, range) {
-  // Wrap sheet name in single quotes to handle special chars (spaces, /)
   const parts = range.split('!');
-  const sheetName = parts[0].replace(/^'|'$/g, ''); // remove existing quotes if any
-  const quotedRange = parts.length === 2
-    ? "'" + sheetName + "'!" + parts[1]
-    : range;
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${id}/values/${encodeURIComponent(quotedRange)}?key=${API_KEY}`;
+  let urlRange;
+  if (parts.length === 2) {
+    // Encode only space and / inside sheet name; keep ' ! : literal for the API
+    const sheetEnc = parts[0].replace(/^'|'$/g, '').replace(/ /g, '%20').replace(/\//g, '%2F');
+    urlRange = "'" + sheetEnc + "'!" + parts[1];
+  } else {
+    urlRange = encodeURIComponent(range);
+  }
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${id}/values/${urlRange}?key=${API_KEY}`;
   const r = await fetch(url);
   const d = await r.json();
-  if (d.error) console.warn('Sheets API error:', d.error.message, 'range:', range);
+  if (d.error) console.warn('Sheets API error:', d.error.message, 'url:', url);
   return d.values || [];
 }
 
