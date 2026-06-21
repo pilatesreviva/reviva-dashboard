@@ -266,12 +266,10 @@ function parseVal(s) {
 }
 
 async function fetchSheet(id, range) {
-  // Use batchGet so the range goes as a query param (avoids / being treated as path separator)
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${id}/values:batchGet?ranges=${encodeURIComponent(range)}&key=${API_KEY}`;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${id}/values/${encodeURIComponent(range)}?key=${API_KEY}`;
   const r = await fetch(url);
   const d = await r.json();
-  if (d.error) console.warn('Sheets API error:', d.error.message, 'range:', range);
-  return (d.valueRanges && d.valueRanges[0] && d.valueRanges[0].values) || [];
+  return d.values || [];
 }
 
 function abrirTab(e, id) {
