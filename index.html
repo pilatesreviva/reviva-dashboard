@@ -266,7 +266,11 @@ function parseVal(s) {
 }
 
 async function fetchSheet(id, range) {
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${id}/values/${encodeURIComponent(range)}?key=${API_KEY}`;
+  // Wrap sheet name in single quotes (handles spaces); encode only spaces inside name
+  const parts = range.split('!');
+  const sheetEnc = "'" + parts[0].replace(/^'|'$/g,'').replace(/ /g,'%20') + "'";
+  const urlRange = parts.length === 2 ? sheetEnc + '!' + parts[1] : encodeURIComponent(range);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${id}/values/${urlRange}?key=${API_KEY}`;
   const r = await fetch(url);
   const d = await r.json();
   return d.values || [];
@@ -354,12 +358,12 @@ function renderPlanos(planos, elId) {
   ).join('');
 }
 
-function renderTabela(rows, tbodyId) {
+function renderTabela(rows, tbodyId, pagoCol) {
   const tbody = document.getElementById(tbodyId);
   tbody.innerHTML = rows.map(r => {
     const nome = r[3]||'';
     const valor = r[4]||'—';
-    const pago = String(r[8]||'').toUpperCase() === 'TRUE';
+    const pago = String(r[pagoCol]||'').toUpperCase() === 'TRUE';
     return `<tr><td>${nome}</td><td>${valor}</td><td><span class="badge ${pago?'b-pago':'b-pendente'}">${pago?'✓ Pago':'⚠ Pendente'}</span></td></tr>`;
   }).join('');
 }
@@ -468,7 +472,7 @@ async function init() {
       semDesc.textContent = 'Faltam ' + fmt(Math.abs(gap)) + ' para a meta mínima';
     }
 
-    // --- Clientes CF ---
+    // --- Clientes CF (PAGO = col I = índice 8) ---
     const cfPagos = cfClientes.filter(r => String(r[8]||'').toUpperCase()==='TRUE').length;
     const cfPend = cfClientes.length - cfPagos;
     renderPlanos(contarPlanos(cfClientes), 'planos-cf');
@@ -476,10 +480,10 @@ async function init() {
       `<span class="badge b-pago">✓ ${cfPagos} adimplentes</span><span class="badge b-pendente">⚠ ${cfPend} pendentes</span>`;
     const cfReceita = cfClientes.reduce((a,r)=>a+parseVal(r[4]),0);
     document.getElementById('alerta-cf').innerHTML = `💡 Receita CF (mês atual): <strong>${fmt(cfReceita)}</strong> · Reviva: <strong>${fmt(cfReceita*0.5)}</strong> (50%)`;
-    renderTabela(cfClientes, 'tbody-cf');
+    renderTabela(cfClientes, 'tbody-cf', 8);
 
-    // --- Clientes Várzea ---
-    const vPagos = varzClientes.filter(r => String(r[8]||'').toUpperCase()==='TRUE').length;
+    // --- Clientes Várzea (PAGO = col J = índice 9) ---
+    const vPagos = varzClientes.filter(r => String(r[9]||'').toUpperCase()==='TRUE').length;
     const vPend = varzClientes.length - vPagos;
     if (varzClientes.length > 0) {
       renderPlanos(contarPlanos(varzClientes), 'planos-varzea');
@@ -487,7 +491,7 @@ async function init() {
         `<span class="badge b-pago">✓ ${vPagos} adimplentes</span><span class="badge b-pendente">⚠ ${vPend} pendentes</span>`;
       const vReceita = varzClientes.reduce((a,r)=>a+parseVal(r[4]),0);
       document.getElementById('alerta-varzea').innerHTML = `💡 Regularizar os ${vPend} pendentes pode representar <strong>${fmt(vPend*200)}/mês</strong> garantidos`;
-      renderTabela(varzClientes, 'tbody-varzea');
+      renderTabela(varzClientes, 'tbody-varzea', 9);
     } else {
       document.getElementById('planos-varzea').innerHTML = '<div class="plano-box" style="grid-column:1/-1"><div class="plano-nome">Dados da Várzea não encontrados</div><div class="plano-num" style="font-size:0.8rem">Verifique o nome da aba na planilha</div></div>';
     }
