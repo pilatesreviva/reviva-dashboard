@@ -266,9 +266,15 @@ function parseVal(s) {
 }
 
 async function fetchSheet(id, range) {
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${id}/values/${encodeURIComponent(range)}?key=${API_KEY}`;
+  // Encode only the sheet name part (before !) to preserve the ! and : separators
+  const parts = range.split('!');
+  const encodedRange = parts.length === 2
+    ? encodeURIComponent(parts[0]) + '!' + parts[1]
+    : encodeURIComponent(range);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${id}/values/${encodedRange}?key=${API_KEY}`;
   const r = await fetch(url);
   const d = await r.json();
+  if (d.error) console.warn('Sheets API error:', d.error.message, 'range:', range);
   return d.values || [];
 }
 
